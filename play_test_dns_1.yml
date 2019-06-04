@@ -1,0 +1,137 @@
+- hosts: localhost
+  gather_facts: False
+  tasks:
+    - name: add A record
+      domain_scaleway_record:
+        token: "{{ token }}"
+        endpoint: "{{ endpoint | default('') }}"
+        name: "{{ name }}"
+        dns_zone: "{{ dns_zone }}"
+        type: A
+        content: 8.8.8.8
+        ttl: 1440
+        state: present
+      register: result
+
+    - name: add the same A record
+      domain_scaleway_record:
+        token: "{{ token }}"
+        endpoint: "{{ endpoint | default('') }}"
+        name: "{{ name }}"
+        dns_zone: "{{ dns_zone }}"
+        type: A
+        content: 8.8.8.8
+        ttl: 1440
+        state: present
+      register: result
+
+    - shell: sleep 20
+
+    - name: test A record
+      shell: dig "{{ name }}"."{{ dns_zone }}" @"{{ dns_server }}" A | grep '8.8.8.8'
+      register: record_test
+      failed_when: record_test.rc == 1     
+
+    - name: delete A record
+      domain_scaleway_record:
+        token: "{{ token }}"
+        endpoint: "{{ endpoint | default('') }}"
+        name: "{{ name }}"
+        dns_zone: "{{ dns_zone }}"
+        type: A
+        ttl: 1440
+        state: absent
+      register: result
+
+    - name: delete same A record
+      domain_scaleway_record:
+        token: "{{ token }}"
+        endpoint: "{{ endpoint | default('') }}"
+        name: "{{ name }}"
+        dns_zone: "{{ dns_zone }}"
+        type: A
+        ttl: 1440
+        state: absent
+      register: result
+
+    - shell: sleep 30
+
+    - name: test A record deleted
+      shell: dig +short "{{ name }}"."{{ dns_zone }}" @"{{ dns_server }}" A | grep '8.8.8.8'
+      register: record_test
+      failed_when: record_test.rc == 0
+
+- hosts: localhost
+  gather_facts: False
+  vars:
+    records :
+    - name: "{{ name }}"
+      dns_zone: "{{ dns_zone }}"
+      type: A
+      ttl: 1440
+      content : "1.1.1.1"
+      state: present
+    - name: "{{ name }}"
+      dns_zone: "{{ dns_zone }}"
+      type: A
+      ttl: 1440
+      content : "4.4.4.4"
+      state: present
+    - name: "{{ name }}"
+      dns_zone: "{{ dns_zone }}"
+      type: A
+      ttl: 1440
+      content : "8.8.8.8"
+      state: present
+  tasks:
+    - name: delete all A records
+      domain_scaleway_record:
+        token: "{{ token }}"
+        endpoint: "{{ endpoint | default('') }}"
+        name: "{{ name }}"
+        dns_zone: "{{ dns_zone }}"
+        type: A
+        ttl: 1440
+        state: absent
+      register: result
+
+    - shell: sleep 30
+
+    - name: add A records
+      domain_scaleway_record:
+        token: "{{ token }}"
+        endpoint: "{{ endpoint | default('') }}"
+        name: "{{ item['name'] }}"
+        dns_zone: "{{ dns_zone }}"
+        type: "{{ item['type'] }}"
+        content : "{{ item['content'] }}"
+        ttl: "{{ item['ttl'] }}"
+        state: "{{ item['state'] }}"
+      with_items: '{{ records }}'
+      register: result
+
+    - shell: sleep 30
+
+    - name: count A record
+      shell: dig +short "{{ name }}"."{{ dns_zone }}" @"{{ dns_server }}" A | wc -l
+      register: record_test
+      failed_when: record_test.stdout.find('3') == -1
+      
+    - name: delete A record with content
+      domain_scaleway_record:
+        token: "{{ token }}"
+        endpoint: "{{ endpoint | default('') }}"
+        name: "{{ name }}"
+        dns_zone: "{{ dns_zone }}"
+        content: "8.8.8.8"
+        type: A
+        ttl: 1440
+        state: absent
+      register: result
+
+    - shell: sleep 30
+
+    - name: test A record absent
+      shell: dig "{{ name }}"."{{ dns_zone }}" @"{{ dns_server }}" A | grep '8.8.8.8'
+      register: record_test
+      failed_when: record_test.rc == 0

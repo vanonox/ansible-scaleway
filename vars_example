@@ -1,0 +1,13 @@
+all:
+  hosts: 
+    localhost ansible_connection=local
+  vars:
+    token: 'xxxxx'
+    organization_id: 'yyyy'
+    endpoint: 'https://api.scaleway.com'
+    version: 'v2alpha2'
+    name: 'test'
+    domain: 'example.com'
+    domain_transferable: 'test-domain-30-days-old.com'
+    dns_zone: 'www.example.com'
+    dns_server: '9.9.9.9'

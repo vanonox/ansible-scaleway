@@ -1,0 +1,3 @@
+DEFAULT_TTL = 86400
+DEFAULT_PRIORITY = 10
+DEFAULT_ENDPOINT = 'https://api.scaleway.com'

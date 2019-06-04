@@ -1,0 +1,4 @@
+*.retry
+*.pyc
+library/test/*
+vars_tests

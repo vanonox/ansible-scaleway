@@ -1,0 +1,115 @@
+- hosts: localhost
+  gather_facts: False
+  vars:
+    records :
+    - name: "{{ name }}"
+      dns_zone: "{{ dns_zone }}"
+      type: A
+      ttl: 1440
+      content : "1.1.1.1"
+      state: present
+    - name: "{{ name }}"
+      dns_zone: "{{ dns_zone }}"
+      type: A
+      ttl: 1440
+      content : "4.4.4.4"
+      state: present
+    - name: "{{ name }}"
+      dns_zone: "{{ dns_zone }}"
+      type: A
+      ttl: 1440
+      content : "8.8.8.8"
+      state: present
+  tasks:
+    - name: clear dns zone
+      domain_scaleway_dns_zone:
+        token: "{{ token }}"
+        endpoint: "{{ endpoint | default('') }}"
+        dns_zone: "{{ dns_zone }}"
+        action: "clear"
+      register: result
+
+    - name: add A records
+      domain_scaleway_record:
+        token: "{{ token }}"
+        endpoint: "{{ endpoint | default('') }}"
+        name: "{{ item['name'] }}"
+        dns_zone: "{{ dns_zone }}"
+        type: "{{ item['type'] }}"
+        content : "{{ item['content'] }}"
+        ttl: "{{ item['ttl'] }}"
+        state: "{{ item['state'] }}"
+      with_items: '{{ records }}'
+      register: result
+
+    - name: list dns zone records
+      domain_scaleway_dns_zone:
+        token: "{{ token }}"
+        endpoint: "{{ endpoint | default('') }}"
+        dns_zone: "{{ dns_zone }}"
+        action: "list_records"
+      register: result
+      failed_when: result.contents | length != 5 # 3 records and 2 default NS
+
+    - name: delete all A records
+      domain_scaleway_record:
+        token: "{{ token }}"
+        endpoint: "{{ endpoint | default('') }}"
+        name: "{{ name }}"
+        dns_zone: "{{ dns_zone }}"
+        type: A
+        ttl: 1440
+        state: absent
+      register: result
+
+    - name: list dns zone records a second time
+      domain_scaleway_dns_zone:
+        token: "{{ token }}"
+        endpoint: "{{ endpoint | default('') }}"
+        dns_zone: "{{ dns_zone }}"
+        action: "list_records"
+      register: result
+      failed_when: result.contents | length != 2 # 2 default NS
+
+    - name: add A records again
+      domain_scaleway_record:
+        token: "{{ token }}"
+        endpoint: "{{ endpoint | default('') }}"
+        name: "{{ item['name'] }}"
+        dns_zone: "{{ dns_zone }}"
+        type: "{{ item['type'] }}"
+        content : "{{ item['content'] }}"
+        ttl: "{{ item['ttl'] }}"
+        state: "{{ item['state'] }}"
+      with_items: '{{ records }}'
+      register: result
+
+    - name: list dns zone records a third time
+      domain_scaleway_dns_zone:
+        token: "{{ token }}"
+        endpoint: "{{ endpoint | default('') }}"
+        dns_zone: "{{ dns_zone }}"
+        action: "list_records"
+      register: result
+      failed_when: result.contents | length != 5 # 3 records and 2 default NS
+
+    - name: delete A record with content
+      domain_scaleway_record:
+        token: "{{ token }}"
+        endpoint: "{{ endpoint | default('') }}"
+        name: "{{ name }}"
+        dns_zone: "{{ dns_zone }}"
+        content: "8.8.8.8"
+        type: A
+        ttl: 1440
+        state: absent
+      register: result
+
+    - name: list dns zone records a last time
+      domain_scaleway_dns_zone:
+        token: "{{ token }}"
+        endpoint: "{{ endpoint | default('') }}"
+        dns_zone: "{{ dns_zone }}"
+        action: "list_records"
+      register: result
+      failed_when: result.contents | length != 4 # 2 records and 2 default NS

@@ -1,0 +1,11 @@
+galaxy_info:
+  role_name: ansible-domain-v2
+  author: Scaleway Domain Team
+  description: Scaleway - Ansible Plugin for Domain
+  company: Scaleway
+  license: proprietary
+  galaxy_tags:
+    - scaleway
+    - domain
+dependencies: []
+

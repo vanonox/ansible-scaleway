@@ -1,0 +1,44 @@
+FROM alpine:3.6
+
+COPY requirements.txt /requirements.txt
+
+# Install Certificates
+RUN apk update && apk add ca-certificates curl
+RUN mkdir -p /usr/local/share/ca-certificates
+RUN curl https://nexus-registry.infra.online.net/repository/raw-registry/security/ca.pem >/usr/local/share/ca-certificates/scaleway.crt
+RUN update-ca-certificates
+ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+
+RUN echo "===> Installing sudo to emulate normal OS behavior..."  && \
+    apk --update add sudo bind-tools                              && \
+    \
+    \
+    echo "===> Adding Python runtime..."  && \
+    apk --update add python py-pip openssl ca-certificates    && \
+    apk --update add --virtual build-dependencies \
+                python-dev libffi-dev openssl-dev build-base  && \
+    pip install --upgrade pip cffi                            && \
+    \
+    \
+    echo "===> Installing Ansible..."  && \
+    pip install ansible                && \
+    \
+    \
+    echo "===> Removing package list..."  && \
+    apk del build-dependencies            && \
+    rm -rf /var/cache/apk/*               && \
+    \
+    \
+    echo "===> Adding hosts for tests..."  && \
+    mkdir -p /etc/ansible                        && \
+    echo 'localhost' > /etc/ansible/hosts && \
+    \
+    \
+    echo "===> Install requirements..."  && \
+    mkdir -p /app                        && \
+    pip install -r /requirements.txt 
+
+WORKDIR /app
+
+# default command: display Ansible version
+CMD [ "ansible-playbook", "--version" ]

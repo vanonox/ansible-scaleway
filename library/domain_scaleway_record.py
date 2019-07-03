@@ -7,7 +7,7 @@ import json
 
 DEFAULT_TTL = 86400
 DEFAULT_PRIORITY = 10
-DEFAULT_ENDPOINT = 'https://api.scaleway.net'
+DEFAULT_ENDPOINT = 'https://api.scaleway.com'
 DEFAULT_VERSION = 'v2alpha2'
 
 ANSIBLE_METADATA = {
